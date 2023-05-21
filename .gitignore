@@ -6,3 +6,7 @@ __pycache__
 
 # Don't ignore .png files in the generated directory
 !/generated/*.png
+
+generations
+debug-*.txt
+prompt-*.md
