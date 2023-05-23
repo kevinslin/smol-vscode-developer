@@ -130,7 +130,6 @@ def main(prompt, directory=generatedDir, file=None):
     """,
         prompt,
     )
-    print(filepaths_string)
     # parse the result into a python list
     list_actual = []
     try:
