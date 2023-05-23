@@ -3,7 +3,6 @@ import os
 
 generatedDir = "generated"
 
-
 def read_file(filename):
     with open(filename, "r") as file:
         return file.read()
@@ -39,8 +38,16 @@ def walk_directory(directory):
     return code_contents
 
 
-def main(prompt, directory=generatedDir, model="gpt-3.5-turbo"):
-    code_contents = walk_directory(directory)
+def main(prompt, directory=generatedDir, model="gpt-3.5-turbo", fpaths=None):
+    if fpaths:
+        print("reading fpath")
+        code_contents = {}
+        for fpath in fpaths:
+            content = read_file(fpath)
+            code_contents[fpath] = content
+    else:
+        print("walking directory")
+        code_contents = walk_directory(directory)
 
     # Now, `code_contents` is a dictionary that contains the content of all your non-image files
     # You can send this to OpenAI's text-davinci-003 for help
@@ -59,6 +66,7 @@ def main(prompt, directory=generatedDir, model="gpt-3.5-turbo"):
     prompt += (
         "\n\nGive me ideas for what could be wrong and what fixes to do in which files."
     )
+    print("Prompt: " + prompt)
     res = generate_response(system, prompt, model)
     # print res in teal
     print("\033[96m" + res + "\033[0m")
@@ -100,5 +108,10 @@ if __name__ == "__main__":
         print("Please provide a prompt")
         sys.exit(1)
     prompt = sys.argv[1]
-    model = sys.argv[2] if len(sys.argv) > 2 else "gpt-3.5-turbo"
-    main(prompt, model)
+    # model = sys.argv[2] if len(sys.argv) > 2 else "gpt-3.5-turbo"
+    model = "gpt-3.5-turbo"
+    if len(sys.argv) > 2:
+        fpaths = sys.argv[2].split(",")
+    else:
+        fpaths = None
+    main(prompt, model, fpaths=fpaths)
