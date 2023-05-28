@@ -1,11 +1,14 @@
-import sys
-import os
 import ast
+import os
+import sys
 from time import sleep
+
+from developer.utils import append_to_file
 
 generatedDir = "generated"
 openai_model = "gpt-4"  # or 'gpt-3.5-turbo',
 openai_model_max_tokens = 2000  # i wonder how to tweak this properly
+
 
 def generate_response(system_prompt, user_prompt, *args):
     import openai
@@ -23,15 +26,16 @@ def generate_response(system_prompt, user_prompt, *args):
             + prompt[:50]
             + "\033[0m"
         )
+        return len(encoding.encode(prompt))
 
     # Set up your OpenAI API credentials
     openai.api_key = os.environ["OPENAI_API_KEY"]
 
     messages = []
     messages.append({"role": "system", "content": system_prompt})
-    reportTokens(system_prompt)
+    system_tokens = reportTokens(system_prompt)
     messages.append({"role": "user", "content": user_prompt})
-    reportTokens(user_prompt)
+    user_tokens = reportTokens(user_prompt)
     # loop thru each arg and add it to messages alternating role between "assistant" and "user"
     role = "assistant"
     for value in args:
@@ -60,6 +64,7 @@ def generate_response(system_prompt, user_prompt, *args):
 
     # Get the reply from the API response
     reply = response.choices[0]["message"]["content"]
+    append_to_file(system_prompt=system_prompt, user_prompt=user_prompt, system_tokens=system_tokens, user_tokens=user_tokens, reply=reply)
     return reply
 
 
@@ -132,6 +137,7 @@ def main(prompt, directory=generatedDir, file=None):
     )
     # parse the result into a python list
     list_actual = []
+    sys.exit()
     try:
         list_actual = ast.literal_eval(filepaths_string)
 
