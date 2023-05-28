@@ -183,6 +183,36 @@ def main(prompt, directory=generatedDir, file=None,  start_from = None):
             with open("shared_dependencies.md", "r") as shared_dependencies_file:
                 shared_dependencies = shared_dependencies_file.read()
 
+        # ensure that generated directory exists
+        os.makedirs(directory, exist_ok=True)
+
+        if should_generate_shared_deps(start_from):
+            # understand shared dependencies
+            shared_dependencies = generate_response(
+                """You are an AI developer who is trying to write a program that will generate code for the user based on their intent.
+In response to the user's prompt:
+
+---
+the app is: {prompt}
+---
+
+the files we have decided to generate are: {filepaths_string}
+
+Now that we have a list of files, we need to understand what dependencies they share.
+Name and briefly describe what is shared between the files we are generating, including exported variables, data schemas, and function signatures.
+Exclusively focus on the names of the shared dependencies, and do not add any other explanation. For function signatures, include the function name and the input and output parameters. Add type annotations to the function signatures.""",
+                prompt,
+                prompt_log_suffix=Checkpoint.GENERATE_SHARED_LIBRARIES
+            )
+            print(shared_dependencies)
+            # write shared dependencies as a md file inside the generated directory
+            write_file("shared_dependencies.md", shared_dependencies, directory)
+        else:
+            with open(os.path.join(directory, 'shared_dependencies.md'), 'r') as file:
+                shared_dependencies = file.read()
+
+
+        sys.exit()
         if file is not None:
             # check file
             print("file", file)
@@ -197,33 +227,6 @@ def main(prompt, directory=generatedDir, file=None,  start_from = None):
             if should_clean_dir(start_from):
                 print("cleaning directory ", directory)
                 #clean_dir(directory)
-
-            if should_generate_shared_deps(start_from):
-                # understand shared dependencies
-                shared_dependencies = generate_response(
-                    """You are an AI developer who is trying to write a program that will generate code for the user based on their intent.
-
-                In response to the user's prompt:
-
-                ---
-                the app is: {prompt}
-                ---
-
-                the files we have decided to generate are: {filepaths_string}
-
-                Now that we have a list of files, we need to understand what dependencies they share.
-                Please name and briefly describe what is shared between the files we are generating, including exported variables, data schemas, id names of every DOM elements that javascript functions will use, message names, and function names.
-                Exclusively focus on the names of the shared dependencies, and do not add any other explanation.
-                """,
-                    prompt,
-                    prompt_log_suffix=Checkpoint.GENERATE_SHARED_LIBRARIES
-                )
-                print(shared_dependencies)
-                # write shared dependencies as a md file inside the generated directory
-                write_file("shared_dependencies.md", shared_dependencies, directory)
-            else:
-                with open(os.path.join(directory, 'shared_dependencies.md'), 'r') as file:
-                    shared_dependencies = file.read()
 
             print("generating files: ", list_actual, "in directory", directory, "with shared dependencies", shared_dependencies)
             for name in list_actual:
