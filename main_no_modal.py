@@ -1,13 +1,22 @@
 import ast
+import json
 import os
 import sys
 from time import sleep
+from enum import Enum
 
-from developer.utils import append_to_file
+from developer.utils import append_to_file, get_log_dir
 
 generatedDir = "generated"
 openai_model = "gpt-4"  # or 'gpt-3.5-turbo',
 openai_model_max_tokens = 2000  # i wonder how to tweak this properly
+
+
+class StartFromEnum(Enum):
+    GENERATE_FILE_LIST = "1_generate_file_list"
+    GENERATE_SHARED_LIBRARIES = "2_generate_shared_libraries"
+    GENERATE_CODE = "3_generate_code"
+
 
 
 def generate_response(system_prompt, user_prompt, *args):
@@ -110,7 +119,17 @@ def generate_file(
     return filename, filecode
 
 
-def main(prompt, directory=generatedDir, file=None):
+def should_generate_file_list(start_from: StartFromEnum = None):
+    if start_from is None:
+        return True 
+
+def read_file_list_from_disk():
+    log_dir = get_log_dir()
+    with open(os.path.join(log_dir, 'prompts.0.json'), 'r') as file:
+        file_list = json.load(file)['reply']
+        return file_list
+
+def main(prompt, directory=generatedDir, file=None,  start_from = None):
     # read file from prompt if it ends in a .md filetype
     if prompt.endswith(".md"):
         with open(prompt, "r") as promptfile:
@@ -120,26 +139,27 @@ def main(prompt, directory=generatedDir, file=None):
     # print the prompt in green color
     print("\033[92m" + prompt + "\033[0m")
 
-    # example prompt:
-    # a Chrome extension that, when clicked, opens a small window with a page where you can enter
-    # a prompt for reading the currently open page and generating some response from openai
 
-    # call openai api with this prompt
-    filepaths_string = generate_response(
-        """You are an AI developer who is trying to write a program that will generate code for the user based on their intent.
+    if should_generate_file_list(start_from):
+        # call openai api with this prompt
+        filepaths_string = generate_response(
+            """You are an AI developer who is trying to write a program that will generate code for the user based on their intent.
 
-    When given their intent, create a complete, exhaustive list of filepaths that the user would write to make the program.
+        When given their intent, create a complete, exhaustive list of filepaths that the user would write to make the program.
 
-    only list the filepaths you would write, and return them as a python list of strings.
-    do not add any other explanation, only return a python list of strings.
-    """,
-        prompt,
-    )
+        only list the filepaths you would write, and return them as a python list of strings.
+        do not add any other explanation, only return a python list of strings.
+        """,
+            prompt,
+        )
+    else:
+        filepaths_string = read_file_list_from_disk()
     # parse the result into a python list
     list_actual = []
-    sys.exit()
     try:
         list_actual = ast.literal_eval(filepaths_string)
+        print(list_actual)
+        sys.exit()
 
         # if shared_dependencies.md is there, read it in, else set it to None
         shared_dependencies = None
@@ -235,11 +255,23 @@ def clean_dir(directory):
         os.makedirs(directory, exist_ok=True)
 
 
+import argparse
+
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Please provide a prompt")
-        sys.exit(1)
-    prompt = sys.argv[1]
-    directory = sys.argv[2] if len(sys.argv) > 2 else generatedDir
-    file = sys.argv[3] if len(sys.argv) > 3 else None
-    main(prompt, directory, file)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("prompt", help="Prompt to provide")
+    parser.add_argument("directory", nargs="?", default="generatedDir", help="Directory path")
+    parser.add_argument("file", nargs="?", help="File name")
+    parser.add_argument(
+        "-s",
+        "--start-from",
+        choices=["1_generate_file_list", "2_generate_shared_libraries", "3_generate_code"],
+        help="Specify the starting point",
+    )
+    args = parser.parse_args()
+
+    prompt = args.prompt
+    directory = args.directory
+    file = args.file
+    start_from = args.start_from
+    main(prompt, directory, file, start_from)
