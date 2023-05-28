@@ -4,6 +4,7 @@ import os
 import sys
 from time import sleep
 from enum import Enum
+from typing import Optional
 
 from developer.utils import append_to_file, get_log_dir
 
@@ -118,9 +119,21 @@ def generate_file(
     return filename, filecode
 
 
-def should_generate_file_list(start_from: Checkpoint = None):
+def should_generate_file_list(start_from: Optional[Checkpoint] = None):
     if start_from is None:
         return True 
+    return False
+
+def should_generate_shared_deps(start_from: Optional[Checkpoint] = None):
+    if start_from == Checkpoint.GENERATE_CODE.value:
+        return False
+    return True
+
+def should_clean_dir(start_from: Optional[Checkpoint] = None):
+    if start_from is None:
+        return True
+    if start_from == Checkpoint.GENERATE_CODE.value:
+        return False
 
 def read_file_list_from_disk():
     log_dir = get_log_dir()
@@ -152,6 +165,7 @@ def main(prompt, directory=generatedDir, file=None,  start_from = None):
             prompt,
         )
     else:
+        print("reading file list from disk")
         filepaths_string = read_file_list_from_disk()
     # parse the result into a python list
     list_actual = []
@@ -176,32 +190,38 @@ def main(prompt, directory=generatedDir, file=None,  start_from = None):
             )
             write_file(filename, filecode, directory)
         else:
-            clean_dir(directory)
+            if should_clean_dir(start_from):
+                print("cleaning directory ", directory)
+                clean_dir(directory)
 
-            # understand shared dependencies
-            shared_dependencies = generate_response(
-                """You are an AI developer who is trying to write a program that will generate code for the user based on their intent.
+            if should_generate_shared_deps(start_from):
+                # understand shared dependencies
+                shared_dependencies = generate_response(
+                    """You are an AI developer who is trying to write a program that will generate code for the user based on their intent.
 
-            In response to the user's prompt:
+                In response to the user's prompt:
 
-            ---
-            the app is: {prompt}
-            ---
+                ---
+                the app is: {prompt}
+                ---
 
-            the files we have decided to generate are: {filepaths_string}
+                the files we have decided to generate are: {filepaths_string}
 
-            Now that we have a list of files, we need to understand what dependencies they share.
-            Please name and briefly describe what is shared between the files we are generating, including exported variables, data schemas, id names of every DOM elements that javascript functions will use, message names, and function names.
-            Exclusively focus on the names of the shared dependencies, and do not add any other explanation.
-            """,
-                prompt,
-                prompt_log_suffix=Checkpoint.GENERATE_SHARED_LIBRARIES
-            )
-            print(shared_dependencies)
-            # write shared dependencies as a md file inside the generated directory
-            write_file("shared_dependencies.md", shared_dependencies, directory)
-            sys.exit()
+                Now that we have a list of files, we need to understand what dependencies they share.
+                Please name and briefly describe what is shared between the files we are generating, including exported variables, data schemas, id names of every DOM elements that javascript functions will use, message names, and function names.
+                Exclusively focus on the names of the shared dependencies, and do not add any other explanation.
+                """,
+                    prompt,
+                    prompt_log_suffix=Checkpoint.GENERATE_SHARED_LIBRARIES
+                )
+                print(shared_dependencies)
+                # write shared dependencies as a md file inside the generated directory
+                write_file("shared_dependencies.md", shared_dependencies, directory)
+            else:
+                with open(os.path.join(directory, 'shared_dependencies.md'), 'r') as file:
+                    shared_dependencies = file.read()
 
+            print("generating files: ", list_actual, "in directory", directory, "with shared dependencies", shared_dependencies)
             for name in list_actual:
                 filename, filecode = generate_file(
                     name,
