@@ -1,0 +1,11 @@
+{
+  "name": "developer",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/smol-ai/developer.git",
+  "author": "Kevin <kevin@dendron.so>",
+  "license": "MIT",
+  "scripts": {
+    "start": "python main_no_modal.py prompt-vscode.md "
+  }
+}

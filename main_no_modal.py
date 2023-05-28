@@ -163,10 +163,12 @@ def main(prompt, directory=generatedDir, file=None,  start_from = None):
         do not add any other explanation, only return a python list of strings.
         """,
             prompt,
+            prompt_log_suffix=Checkpoint.GENERATE_FILE_LIST
         )
     else:
         print("reading file list from disk")
         filepaths_string = read_file_list_from_disk()
+    sys.exit()
     # parse the result into a python list
     list_actual = []
     try:

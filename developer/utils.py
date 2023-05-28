@@ -5,6 +5,12 @@ import json
 def get_log_dir():
     return 'logs'
 
+def get_current_time_epoch():
+    import time
+    current_time_epoch = int(time.time())
+    return current_time_epoch
+
+
 def append_to_file( 
     *,
     reply: str,
@@ -34,10 +40,10 @@ Reply: {{ reply }}
     template = Template(template_string)
     rendered_template = template.render(**data)
 
-    with open(f'{get_log_dir()}/prompts.{prompt_log_suffix}.json', 'w') as file:
+    with open(f'{get_log_dir()}/prompts.{prompt_log_suffix}.{get_current_time_epoch()}.json', 'w') as file:
         json_string = json.dumps(data)
         file.write(json_string)
-    with open(f'{get_log_dir()}/prompts.{prompt_log_suffix}.txt', 'w') as file:
+    with open(f'{get_log_dir()}/prompts.{prompt_log_suffix}.{get_current_time_epoch()}.txt', 'w') as file:
         file.write(rendered_template)
 
 

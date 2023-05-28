@@ -12,3 +12,5 @@ debug-*.txt
 prompt-*.md
 logs
 generated
+logs.zip
+.gitignore
