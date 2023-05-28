@@ -6,12 +6,13 @@ def get_log_dir():
     return 'logs'
 
 def append_to_file( 
+    *,
     reply: str,
     system_prompt: str,
     user_prompt: str,
     system_tokens: int,
     user_tokens: int,
-    num_suffix: int=0,
+    prompt_log_suffix: str = None
                    ):
     template_string = """
 System: {{ system_prompt }}
@@ -33,10 +34,10 @@ Reply: {{ reply }}
     template = Template(template_string)
     rendered_template = template.render(**data)
 
-    with open(f'{get_log_dir()}/prompts.{num_suffix}.json', 'w') as file:
+    with open(f'{get_log_dir()}/prompts.{prompt_log_suffix}.json', 'w') as file:
         json_string = json.dumps(data)
         file.write(json_string)
-    with open(f'{get_log_dir()}/prompts.{num_suffix}.txt', 'w') as file:
+    with open(f'{get_log_dir()}/prompts.{prompt_log_suffix}.txt', 'w') as file:
         file.write(rendered_template)
 
 

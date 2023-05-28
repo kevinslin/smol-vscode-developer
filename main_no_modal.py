@@ -12,14 +12,12 @@ openai_model = "gpt-4"  # or 'gpt-3.5-turbo',
 openai_model_max_tokens = 2000  # i wonder how to tweak this properly
 
 
-class StartFromEnum(Enum):
+class Checkpoint(Enum):
     GENERATE_FILE_LIST = "1_generate_file_list"
     GENERATE_SHARED_LIBRARIES = "2_generate_shared_libraries"
     GENERATE_CODE = "3_generate_code"
 
-
-
-def generate_response(system_prompt, user_prompt, *args):
+def generate_response(system_prompt, user_prompt, *args, prompt_log_suffix: Checkpoint=None):
     import openai
     import tiktoken
 
@@ -73,7 +71,8 @@ def generate_response(system_prompt, user_prompt, *args):
 
     # Get the reply from the API response
     reply = response.choices[0]["message"]["content"]
-    append_to_file(system_prompt=system_prompt, user_prompt=user_prompt, system_tokens=system_tokens, user_tokens=user_tokens, reply=reply)
+    append_to_file(system_prompt=system_prompt, user_prompt=user_prompt, system_tokens=system_tokens, 
+                   user_tokens=user_tokens, reply=reply, prompt_log_suffix=prompt_log_suffix)
     return reply
 
 
@@ -119,7 +118,7 @@ def generate_file(
     return filename, filecode
 
 
-def should_generate_file_list(start_from: StartFromEnum = None):
+def should_generate_file_list(start_from: Checkpoint = None):
     if start_from is None:
         return True 
 
@@ -159,7 +158,6 @@ def main(prompt, directory=generatedDir, file=None,  start_from = None):
     try:
         list_actual = ast.literal_eval(filepaths_string)
         print(list_actual)
-        sys.exit()
 
         # if shared_dependencies.md is there, read it in, else set it to None
         shared_dependencies = None
@@ -197,10 +195,12 @@ def main(prompt, directory=generatedDir, file=None,  start_from = None):
             Exclusively focus on the names of the shared dependencies, and do not add any other explanation.
             """,
                 prompt,
+                prompt_log_suffix=Checkpoint.GENERATE_SHARED_LIBRARIES
             )
             print(shared_dependencies)
             # write shared dependencies as a md file inside the generated directory
             write_file("shared_dependencies.md", shared_dependencies, directory)
+            sys.exit()
 
             for name in list_actual:
                 filename, filecode = generate_file(
@@ -260,7 +260,7 @@ import argparse
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("prompt", help="Prompt to provide")
-    parser.add_argument("directory", nargs="?", default="generatedDir", help="Directory path")
+    parser.add_argument("directory", nargs="?", default="generated", help="Directory path")
     parser.add_argument("file", nargs="?", help="File name")
     parser.add_argument(
         "-s",
