@@ -84,35 +84,35 @@ def generate_file(
     filecode = generate_response(
         f"""You are an AI developer who is trying to write a program that will generate code for the user based on their intent.
 
-    the app is: {prompt}
+the app is: {prompt}
 
-    the files we have decided to generate are: {filepaths_string}
+the files we have decided to generate are: {filepaths_string}
 
-    the shared dependencies (like filenames and variable names) we have decided on are: {shared_dependencies}
+the shared dependencies (like filenames and variable names) we have decided on are: {shared_dependencies}
 
-    only write valid code for the given filepath and file type, and return only the code.
-    do not add any other explanation, only return valid code for that file type.
+only write valid code for the given filepath and file type, and return only the code.
+do not add any other explanation, only return valid code for that file type.
     """,
         f"""
-    We have broken up the program into per-file generation.
-    Now your job is to generate only the code for the file {filename}.
-    Make sure to have consistent filenames if you reference other files we are also generating.
+We have broken up the program into per-file generation.
+Now your job is to generate only the code for the file {filename}.
+Make sure to have consistent filenames if you reference other files we are also generating.
 
-    Remember that you must obey 3 things:
-       - you are generating code for the file {filename}
-       - do not stray from the names of the files and the shared dependencies we have decided on
-       - MOST IMPORTANT OF ALL - the purpose of our app is {prompt} - every line of code you generate must be valid code. Do not include code fences in your response, for example
+Remember that you must obey 3 things:
+- you are generating code for the file {filename}
+- do not stray from the names of the files and the shared dependencies we have decided on
+- when using functions from the shared dependencies, use the function signatures we have decided on. DO NOT call functions with arguments that do not match THE FUNCTION SIGNATURES 
+- MOST IMPORTANT OF ALL - the purpose of our app is {prompt} - every line of code you generate must be valid code. Do not include code fences in your response, for example
 
-    Bad response:
-    ```javascript
-    console.log("hello world")
-    ```
+Bad response:
+```javascript
+console.log("hello world")
+```
 
-    Good response:
-    console.log("hello world")
+Good response:
+console.log("hello world")
 
-    Begin generating the code now.
-
+Begin generating the code now.
     """,
     prompt_log_suffix=Checkpoint.GENERATE_CODE.value + "-" + to_kebab_case(filename)
     )
@@ -177,12 +177,6 @@ def main(prompt, directory=generatedDir, file=None,  start_from = None):
         list_actual = ast.literal_eval(filepaths_string)
         print(list_actual)
 
-        # if shared_dependencies.md is there, read it in, else set it to None
-        shared_dependencies = None
-        if os.path.exists("shared_dependencies.md"):
-            with open("shared_dependencies.md", "r") as shared_dependencies_file:
-                shared_dependencies = shared_dependencies_file.read()
-
         # ensure that generated directory exists
         os.makedirs(directory, exist_ok=True)
 
@@ -208,11 +202,10 @@ Exclusively focus on the names of the shared dependencies, and do not add any ot
             # write shared dependencies as a md file inside the generated directory
             write_file("shared_dependencies.md", shared_dependencies, directory)
         else:
-            with open(os.path.join(directory, 'shared_dependencies.md'), 'r') as file:
-                shared_dependencies = file.read()
+            with open(os.path.join(directory, 'shared_dependencies.md'), 'r') as fh:
+                shared_dependencies = fh.read()
 
 
-        sys.exit()
         if file is not None:
             # check file
             print("file", file)
