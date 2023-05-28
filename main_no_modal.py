@@ -6,7 +6,7 @@ from time import sleep
 from enum import Enum
 from typing import Optional
 
-from developer.utils import append_to_file, get_log_dir
+from developer.utils import append_to_file, get_log_dir, to_kebab_case
 
 generatedDir = "generated"
 openai_model = "gpt-4"  # or 'gpt-3.5-turbo',
@@ -114,6 +114,7 @@ def generate_file(
     Begin generating the code now.
 
     """,
+    prompt_log_suffix=Checkpoint.GENERATE_CODE.value + "-" + to_kebab_case(filename)
     )
 
     return filename, filecode
@@ -165,10 +166,11 @@ def main(prompt, directory=generatedDir, file=None,  start_from = None):
             prompt,
             prompt_log_suffix=Checkpoint.GENERATE_FILE_LIST
         )
+        write_file("filepaths_string.md", filepaths_string, directory)
     else:
         print("reading file list from disk")
-        filepaths_string = read_file_list_from_disk()
-    sys.exit()
+        with open(os.path.join(directory, "filepaths_string.md")) as fh:
+            filepaths_string = fh.read()
     # parse the result into a python list
     list_actual = []
     try:
@@ -194,7 +196,7 @@ def main(prompt, directory=generatedDir, file=None,  start_from = None):
         else:
             if should_clean_dir(start_from):
                 print("cleaning directory ", directory)
-                clean_dir(directory)
+                #clean_dir(directory)
 
             if should_generate_shared_deps(start_from):
                 # understand shared dependencies

@@ -1,6 +1,6 @@
 from jinja2 import Template
-from os.path import join
 import json
+import os
 
 def get_log_dir():
     return 'logs'
@@ -9,6 +9,14 @@ def get_current_time_epoch():
     import time
     current_time_epoch = int(time.time())
     return current_time_epoch
+
+def to_kebab_case(string):
+    # Replace spaces and underscores with hyphens
+    string = string.replace(' ', '-').replace('_', '-').replace('/', '-')
+    # Convert to lowercase
+    string = string.lower()
+    
+    return string
 
 
 def append_to_file( 
