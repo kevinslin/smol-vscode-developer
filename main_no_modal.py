@@ -123,6 +123,8 @@ Begin generating the code now.
 def should_generate_file_list(start_from: Optional[Checkpoint] = None):
     if start_from is None:
         return True 
+    if start_from == Checkpoint.GENERATE_FILE_LIST.value:
+        return True 
     return False
 
 def should_generate_shared_deps(start_from: Optional[Checkpoint] = None):
@@ -167,6 +169,9 @@ def main(prompt, directory=generatedDir, file=None,  start_from = None):
             prompt_log_suffix=Checkpoint.GENERATE_FILE_LIST
         )
         write_file("filepaths_string.md", filepaths_string, directory)
+        if start_from:
+            print("BOND")
+            sys.exit(0) 
     else:
         print("reading file list from disk")
         with open(os.path.join(directory, "filepaths_string.md")) as fh:
@@ -201,6 +206,8 @@ Exclusively focus on the names of the shared dependencies, and do not add any ot
             print(shared_dependencies)
             # write shared dependencies as a md file inside the generated directory
             write_file("shared_dependencies.md", shared_dependencies, directory)
+            if start_from:
+                sys.exit(0) 
         else:
             with open(os.path.join(directory, 'shared_dependencies.md'), 'r') as fh:
                 shared_dependencies = fh.read()
