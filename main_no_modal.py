@@ -169,7 +169,6 @@ async def main(prompt, directory=generatedDir, files: List[str] = [],  start_fro
         )
         write_file("filepaths_string.md", filepaths_string, directory)
         if start_from:
-            print("BOND")
             sys.exit(0) 
     else:
         print("reading file list from disk")
