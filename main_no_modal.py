@@ -4,7 +4,10 @@ import os
 import sys
 from time import sleep
 from enum import Enum
-from typing import Optional
+from typing import List, Optional
+import asyncio
+from developer.llm import generate_and_write_code_file
+
 
 from developer.utils import append_to_file, get_log_dir, to_kebab_case
 
@@ -144,7 +147,7 @@ def read_file_list_from_disk():
         file_list = json.load(file)['reply']
         return file_list
 
-def main(prompt, directory=generatedDir, file=None,  start_from = None):
+async def main(prompt, directory=generatedDir, files: List[str] = [],  start_from = None):
     # read file from prompt if it ends in a .md filetype
     if prompt.endswith(".md"):
         with open(prompt, "r") as promptfile:
@@ -178,17 +181,16 @@ def main(prompt, directory=generatedDir, file=None,  start_from = None):
             filepaths_string = fh.read()
     # parse the result into a python list
     list_actual = []
-    try:
-        list_actual = ast.literal_eval(filepaths_string)
-        print(list_actual)
+    list_actual = ast.literal_eval(filepaths_string)
+    print(list_actual)
 
-        # ensure that generated directory exists
-        os.makedirs(directory, exist_ok=True)
+    # ensure that generated directory exists
+    os.makedirs(directory, exist_ok=True)
 
-        if should_generate_shared_deps(start_from):
-            # understand shared dependencies
-            shared_dependencies = generate_response(
-                """You are an AI developer who is trying to write a program that will generate code for the user based on their intent.
+    if should_generate_shared_deps(start_from):
+        # understand shared dependencies
+        shared_dependencies = generate_response(
+            """You are an AI developer who is trying to write a program that will generate code for the user based on their intent.
 In response to the user's prompt:
 
 ---
@@ -200,46 +202,28 @@ the files we have decided to generate are: {filepaths_string}
 Now that we have a list of files, we need to understand what dependencies they share.
 Name and briefly describe what is shared between the files we are generating, including exported variables, data schemas, and function signatures.
 Exclusively focus on the names of the shared dependencies, and do not add any other explanation. For function signatures, include the function name and the input and output parameters. Add type annotations to the function signatures.""",
-                prompt,
-                prompt_log_suffix=Checkpoint.GENERATE_SHARED_LIBRARIES
-            )
-            print(shared_dependencies)
-            # write shared dependencies as a md file inside the generated directory
-            write_file("shared_dependencies.md", shared_dependencies, directory)
-            if start_from:
-                sys.exit(0) 
-        else:
-            with open(os.path.join(directory, 'shared_dependencies.md'), 'r') as fh:
-                shared_dependencies = fh.read()
+            prompt,
+            prompt_log_suffix=Checkpoint.GENERATE_SHARED_LIBRARIES
+        )
+        print(shared_dependencies)
+        # write shared dependencies as a md file inside the generated directory
+        write_file("shared_dependencies.md", shared_dependencies, directory)
+        if start_from:
+            sys.exit(0) 
+    else:
+        print("reading dependencies from disk")
+        with open(os.path.join(directory, 'shared_dependencies.md'), 'r') as fh:
+            shared_dependencies = fh.read()
 
 
-        if file is not None:
-            # check file
-            print("file", file)
-            filename, filecode = generate_file(
-                file,
-                filepaths_string=filepaths_string,
-                shared_dependencies=shared_dependencies,
-                prompt=prompt,
-            )
-            write_file(filename, filecode, directory)
-        else:
-            if should_clean_dir(start_from):
-                print("cleaning directory ", directory)
-                #clean_dir(directory)
-
-            print("generating files: ", list_actual, "in directory", directory, "with shared dependencies", shared_dependencies)
-            for name in list_actual:
-                filename, filecode = generate_file(
-                    name,
-                    filepaths_string=filepaths_string,
-                    shared_dependencies=shared_dependencies,
-                    prompt=prompt,
-                )
-                write_file(filename, filecode, directory)
-
-    except ValueError:
-        print("Failed to parse result: " + result)
+    # generate file list
+    files_to_generate = files if files else list_actual
+    print("generating files: ", files_to_generate)
+    tasks = []
+    for name in files_to_generate:
+        task = asyncio.ensure_future(generate_and_write_code_file(name, filepaths_string, shared_dependencies, prompt, directory))
+        tasks.append(task)
+    await asyncio.gather(*tasks)
 
 
 def write_file(filename, filecode, directory):
@@ -284,11 +268,15 @@ def clean_dir(directory):
 
 import argparse
 
+def comma_separated_list(string):
+    print(string)
+    return string.split(",")
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("prompt", help="Prompt to provide")
     parser.add_argument("directory", nargs="?", default="generated", help="Directory path")
-    parser.add_argument("file", nargs="?", help="File name")
+    parser.add_argument("files", nargs="?", help="File name")
     parser.add_argument(
         "-s",
         "--start-from",
@@ -299,6 +287,6 @@ if __name__ == "__main__":
 
     prompt = args.prompt
     directory = args.directory
-    file = args.file
+    files = args.files.split(",") if args.files else []
     start_from = args.start_from
-    main(prompt, directory, file, start_from)
+    asyncio.run(main( prompt, directory, files, start_from))

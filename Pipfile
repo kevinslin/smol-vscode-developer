@@ -7,6 +7,7 @@ name = "pypi"
 openai = "*"
 tiktoken = "*"
 jinja2 = "*"
+aiofiles = "*"
 
 [dev-packages]
 

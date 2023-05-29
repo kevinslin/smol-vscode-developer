@@ -1,6 +1,7 @@
 from jinja2 import Template
 import json
 import os
+import aiofiles
 
 def get_log_dir():
     return 'logs'
@@ -26,7 +27,7 @@ def append_to_file(
     user_prompt: str,
     system_tokens: int,
     user_tokens: int,
-    prompt_log_suffix: str = None
+    prompt_log_suffix: str = "" 
                    ):
     template_string = """
 System: {{ system_prompt }}
@@ -55,22 +56,3 @@ Reply: {{ reply }}
         file.write(rendered_template)
 
 
-
-def append_to_prompt(
-    *,
-    reply: str,
-    system_prompt: str,
-    user_prompt: str,
-    system_tokens: int,
-    user_tokens: int
-):
-    data = {
-        "system_prompt": system_prompt,
-        "user_prompt": user_prompt,
-        "system_tokens": system_tokens,
-        "user_tokens": user_tokens,
-        "reply": reply
-    }
-    json_string = json.dumps(data)
-    with open('/tmp/out.txt', 'a') as file:
-        file.write(json_string + '\n')
