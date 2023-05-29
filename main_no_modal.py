@@ -7,6 +7,7 @@ from enum import Enum
 from typing import List, Optional
 import asyncio
 from developer.llm import generate_and_write_code_file
+from developer.schema import Checkpoint
 
 
 from developer.utils import append_to_file, get_log_dir, to_kebab_case
@@ -15,11 +16,6 @@ generatedDir = "generated"
 openai_model = "gpt-4"  # or 'gpt-3.5-turbo',
 openai_model_max_tokens = 2000  # i wonder how to tweak this properly
 
-
-class Checkpoint(Enum):
-    GENERATE_FILE_LIST = "1_generate_file_list"
-    GENERATE_SHARED_LIBRARIES = "2_generate_shared_libraries"
-    GENERATE_CODE = "3_generate_code"
 
 def generate_response(system_prompt, user_prompt, *args, prompt_log_suffix: Checkpoint=None):
     import openai
