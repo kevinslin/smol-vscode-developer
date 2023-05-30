@@ -9,7 +9,6 @@ __pycache__
 
 generations
 debug-*.txt
-prompt-*.md
 logs
 generated
 logs.zip
