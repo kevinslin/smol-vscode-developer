@@ -36,7 +36,8 @@ System Tokens: {{ system_tokens }}
 Human: {{ user_prompt }}
 Human Tokens: {{ user_tokens }}
     
-Reply: {{ reply }}
+Reply: 
+{{ reply }}
 """
 
     data = {
