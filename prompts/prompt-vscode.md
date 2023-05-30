@@ -22,5 +22,6 @@ Important details:
     - it should have "--disable-extensions" as one of the "args"
     - the "preLaunchTask" task should be "npm: compile"
 - for all typescript code, generate correct imports according to `"esModuleInterop": true` being set in `tsconfig.json`
-    - when exporting modules, ALWAYS use a named export, NEVER a default export
+    - when exporting modules, ALWAYS use a named export, NEVER a default export. if the module is the only export in the file, the module name should be identical to the filename
     - when importing modules that we have written, ALWAYS import names of modules we are using
+    - when importing modules, ONLY import modules that will be used 
