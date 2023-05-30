@@ -20,4 +20,5 @@ Important details:
 - make sure to include `.vscode/launch.json` as one of the mandatory files
     - it should have a "extensionHost" launch task
     - it should have "--disable-extensions" as one of the "args"
+    - the "preLaunchTask" task should be "npm: compile"
 - for all typescript code, generate correct imports according to `"esModuleInterop": true` being set in `tsconfig.json`. STRONGLY prefer using a default import instead of a namespace import
