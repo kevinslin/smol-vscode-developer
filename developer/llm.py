@@ -120,5 +120,9 @@ async def generate_and_write_code_file(name, filepaths_string, shared_dependenci
         shared_dependencies=shared_dependencies,
         prompt=prompt,
     )
+
+    fpath = f"{directory}/{filename}"
+    # make sure directory exists
+    os.makedirs(os.path.dirname(fpath), exist_ok=True)
     async with aiofiles.open(f'{directory}/{filename}', 'w') as f:
         await f.write(filecode)
