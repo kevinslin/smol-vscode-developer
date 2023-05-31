@@ -14,6 +14,7 @@ Important details:
     - @vscode/test-electron: ^2.3.2
     - dependencies required for testing (eg. mocha)
     - dependencies required for types (eg. @types/mocha)
+- make sure the following constraints are observed in `package.json`
     - when referring to extension command, use the format "extension.{command-name}". DO NOT use the extension name as the command prefix
     - when adding "activationEvents", do not include "onCommand" directives
 - make sure to include `.vscode/launch.json` as one of the mandatory files
