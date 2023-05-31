@@ -11,9 +11,9 @@ Important details:
     - Quickstart: how to use this extension
     - Development Guide: how to develop for this extension
 - make sure the following dependencies are present in `package.json`
-    - @vscode/test-electron": "^2.3.2
-    - dependencies required for testing
-    - dependencies required for types
+    - @vscode/test-electron: ^2.3.2
+    - dependencies required for testing (eg. mocha)
+    - dependencies required for types (eg. @types/mocha)
     - when referring to extension command, use the format "extension.{command-name}". DO NOT use the extension name as the command prefix
     - when adding "activationEvents", do not include "onCommand" directives
 - make sure to include `.vscode/launch.json` as one of the mandatory files
