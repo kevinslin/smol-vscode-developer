@@ -6,7 +6,6 @@ Important details:
     - .gitignore
     - README.md
     - test/runTest.ts
-    - test/suite/index.ts
 - make sure that the README has the following sections:
     - Overview: what this project is about
     - Quickstart: how to use this extension
